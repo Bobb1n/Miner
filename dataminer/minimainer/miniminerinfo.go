@@ -6,15 +6,16 @@ import (
 )
 
 type MiniMainerStr struct {
-	MiniMainerStr datamainer.Miner
+	miniMainer *datamainer.Miner
 }
 
 // вопрос
-func NewMiniMainer() MiniMainerStr {
+func NewMiniMainer() *MiniMainerStr {
 	id := rand.Intn(1000)
-	return MiniMainerStr{
-		MiniMainerStr: datamainer.Miner{
+	return &MiniMainerStr{
+		miniMainer: &datamainer.Miner{
 			Id:        id,
+			Level:     1,
 			Class:     "MiniMainer",
 			Energy:    30,
 			Totalcoal: 0,
@@ -24,13 +25,13 @@ func NewMiniMainer() MiniMainerStr {
 }
 
 func (m *MiniMainerStr) IsRunning() {
-	m.MiniMainerStr.IsRunning = true
+	m.miniMainer.IsRunning = true
 }
 
 func (m *MiniMainerStr) UnIsRunning() {
-	m.MiniMainerStr.IsRunning = false
+	m.miniMainer.IsRunning = false
 }
 
 func (m MiniMainerStr) GetId() int {
-	return m.MiniMainerStr.Id
+	return m.miniMainer.Id
 }

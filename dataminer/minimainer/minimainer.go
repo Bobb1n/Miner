@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	datamainer "nilchan/FinalProject/dataminer"
 	"nilchan/FinalProject/datauser"
 	"sync"
+	"time"
 )
 
 type List struct {
@@ -29,7 +31,7 @@ func (m *List) AddMiner(miner *MiniMainerStr) {
 	m.info[miner.GetId()] = miner
 }
 
-func (m *List) Start(ctx context.Context, salary int, minerID int, wg *sync.WaitGroup) error {
+func (m *List) Run(ctx context.Context, salary int, minerID int, wg *sync.WaitGroup) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -43,7 +45,7 @@ func (m *List) Start(ctx context.Context, salary int, minerID int, wg *sync.Wait
 		return fmt.Errorf("чот не так")
 	}
 
-	if miner.MiniMainerStr.IsRunning {
+	if miner.miniMainer.IsRunning {
 		return fmt.Errorf("майнинг уже запущен")
 	}
 	minerCtx, minercansel := context.WithCancel(ctx)
@@ -54,14 +56,14 @@ func (m *List) Start(ctx context.Context, salary int, minerID int, wg *sync.Wait
 	m.done[minerID] = done
 	m.cancel[minerID] = minercansel
 	miner.IsRunning()
-	m.info[miner.MiniMainerStr.Id] = miner
+	m.info[minerID] = miner
 
-	go m.Run(minerCtx, minerID, done)
+	go m.Start(minerCtx, minerID, done)
 
 	return nil
 }
 
-func (m *List) Run(ctx context.Context, id int, done chan struct{}) {
+func (m *List) Start(ctx context.Context, id int, done chan struct{}) {
 	defer close(done)
 	transferCoal := make(chan int)
 	coal := 0
@@ -83,7 +85,7 @@ func (m *List) Run(ctx context.Context, id int, done chan struct{}) {
 
 				m.mtx.Lock()
 				miner, ok := m.info[id]
-				if !ok || miner.MiniMainerStr.Energy <= 0 {
+				if !ok || miner.miniMainer.Energy <= 0 {
 					m.mtx.Unlock()
 					log.Println("завершили работу")
 					return
@@ -92,12 +94,12 @@ func (m *List) Run(ctx context.Context, id int, done chan struct{}) {
 				coal += 1
 				transferCoal <- coal
 
-				miner.MiniMainerStr.Totalcoal = coal
-				miner.MiniMainerStr.Energy = miner.MiniMainerStr.Energy - 1
+				miner.miniMainer.Totalcoal = coal
+				miner.miniMainer.Energy = miner.miniMainer.Energy - 1
 
 				m.info[id] = miner
 				m.mtx.Unlock()
-				// time.Sleep(1 * time.Second)
+				time.Sleep(100 * time.Millisecond)
 
 			}
 		}
@@ -120,7 +122,6 @@ func (m *List) Run(ctx context.Context, id int, done chan struct{}) {
 		m.mtx.Lock()
 		miner := m.info[id]
 		miner.UnIsRunning()
-		m.info[id] = miner
 
 		m.mtx.Unlock()
 		wg.Wait()
@@ -145,13 +146,27 @@ func (m *List) Stop(id int) error {
 	}
 
 	miner.UnIsRunning()
+	fmt.Println("Майнер остановле по запросу")
 	return nil
 }
 
-func (m *List) InfoAll() map[int]MiniMainerStr {
-	tmp := make(map[int]MiniMainerStr, len(m.info))
+func (m *List) InfoAll() map[int]datamainer.Miner {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	tmp := make(map[int]datamainer.Miner, len(m.info))
 	for k, v := range m.info {
-		tmp[k] = *v
+		tmp[k] = *v.miniMainer
+	}
+	return tmp
+}
+func (m *List) Info(level int) map[int]datamainer.Miner {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	tmp := make(map[int]datamainer.Miner)
+	for k, v := range m.info {
+		if v.miniMainer.Level == level {
+			tmp[k] = *v.miniMainer
+		}
 	}
 	return tmp
 
