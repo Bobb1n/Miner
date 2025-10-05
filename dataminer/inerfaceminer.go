@@ -6,9 +6,9 @@ import (
 )
 
 type MinerMethods interface {
-	InfoAll() map[int]Miner
+	Info() map[int]Miner
 	Run(ctx context.Context, salary int, minerID int, wg *sync.WaitGroup) error
-	Info(level int) map[int]Miner
+	// Info(level int) map[int]Miner
 	// Stop(id int) error
 }
 
@@ -24,13 +24,14 @@ func NewMainer(MinerMethods MinerMethods) *MinerModule {
 	}
 }
 
-func (m *MinerModule) InfoAll() map[int]Miner {
+func (m *MinerModule) Info() map[int]Miner {
 
-	return m.actionsModule.InfoAll()
+	return m.actionsModule.Info()
 }
-func (m *MinerModule) Info(level int) map[int]Miner {
-	return m.actionsModule.Info(level)
-}
+
+// func (m *MinerModule) Info(level int) map[int]Miner {
+// 	return m.actionsModule.Info(level)
+
 func (m *MinerModule) Run(ctx context.Context, salary int, minerID int, wg *sync.WaitGroup) error {
 	return m.actionsModule.Run(ctx, salary, minerID, wg)
 }

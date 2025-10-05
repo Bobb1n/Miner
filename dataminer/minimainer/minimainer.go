@@ -25,6 +25,10 @@ func NewList() *List {
 	}
 }
 
+func (m *List) GetInfo() map[int]*MiniMainerStr {
+	return m.info
+}
+
 func (m *List) AddMiner(miner *MiniMainerStr) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -45,7 +49,7 @@ func (m *List) Run(ctx context.Context, salary int, minerID int, wg *sync.WaitGr
 		return fmt.Errorf("чот не так")
 	}
 
-	if miner.miniMainer.IsRunning {
+	if miner.isRunning {
 		return fmt.Errorf("майнинг уже запущен")
 	}
 	minerCtx, minercansel := context.WithCancel(ctx)
@@ -56,7 +60,6 @@ func (m *List) Run(ctx context.Context, salary int, minerID int, wg *sync.WaitGr
 	m.done[minerID] = done
 	m.cancel[minerID] = minercansel
 	miner.IsRunning()
-	m.info[minerID] = miner
 
 	go m.Start(minerCtx, minerID, done)
 
@@ -85,7 +88,7 @@ func (m *List) Start(ctx context.Context, id int, done chan struct{}) {
 
 				m.mtx.Lock()
 				miner, ok := m.info[id]
-				if !ok || miner.miniMainer.Energy <= 0 {
+				if !ok || miner.energy <= 0 {
 					m.mtx.Unlock()
 					log.Println("завершили работу")
 					return
@@ -94,8 +97,8 @@ func (m *List) Start(ctx context.Context, id int, done chan struct{}) {
 				coal += 1
 				transferCoal <- coal
 
-				miner.miniMainer.Totalcoal = coal
-				miner.miniMainer.Energy = miner.miniMainer.Energy - 1
+				miner.totalcoal = coal
+				miner.energy = miner.energy - 1
 
 				m.info[id] = miner
 				m.mtx.Unlock()
@@ -150,24 +153,36 @@ func (m *List) Stop(id int) error {
 	return nil
 }
 
-func (m *List) InfoAll() map[int]datamainer.Miner {
+func (m *List) Info() map[int]datamainer.Miner {
 	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	tmp := make(map[int]datamainer.Miner, len(m.info))
-	for k, v := range m.info {
-		tmp[k] = *v.miniMainer
+
+	miners := make([]*MiniMainerStr, 0, len(m.info))
+	for _, v := range m.info {
+		miners = append(miners, v)
 	}
-	return tmp
-}
-func (m *List) Info(level int) map[int]datamainer.Miner {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	tmp := make(map[int]datamainer.Miner)
-	for k, v := range m.info {
-		if v.miniMainer.Level == level {
-			tmp[k] = *v.miniMainer
+	m.mtx.Unlock()
+	tmp := make(map[int]datamainer.Miner, len(m.info))
+	for k, v := range miners {
+		tmp[k] = datamainer.Miner{
+			Id:        v.id,
+			Class:     v.class,
+			Energy:    v.energy,
+			Totalcoal: v.totalcoal,
+			IsRunning: v.isRunning,
 		}
 	}
 	return tmp
-
 }
+
+// func (m *List) Info(level int) map[int]Mi {
+// 	m.mtx.Lock()
+// 	defer m.mtx.Unlock()
+// 	tmp := make(map[int]datamainer.Miner)
+// 	for k, v := range m.info {
+// 		if v.miniMainer.Level == level {
+// 			tmp[k] = *v.miniMainer
+// 		}
+// 	}
+// 	return tmp
+
+// }

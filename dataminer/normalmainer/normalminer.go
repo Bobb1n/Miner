@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	datamainer "nilchan/FinalProject/dataminer"
 	"nilchan/FinalProject/datauser"
 	"sync"
 	"time"
@@ -16,8 +17,8 @@ type List struct {
 	done   map[int]chan struct{}
 }
 
-func NewNormalMiner() List {
-	return List{
+func NewNormalMiner() *List {
+	return &List{
 		info:   make(map[int]*NormMainer),
 		cancel: make(map[int]context.CancelFunc),
 		done:   make(map[int]chan struct{}),
@@ -30,7 +31,7 @@ func (m *List) AddMiner(miner *NormMainer) {
 	m.info[miner.id] = miner
 }
 
-func (m *List) Run(ctx context.Context, wg *sync.WaitGroup, salary int, id int) error {
+func (m *List) Run(ctx context.Context, salary int, id int, wg *sync.WaitGroup) error {
 	if salary < 50 {
 		return datauser.ErrorLackingBalace
 	}
@@ -96,22 +97,33 @@ func (m *List) Start(ctx context.Context, id int, done chan struct{}) {
 		miner.UnRunning()
 	}()
 }
-func (m *List) Info(level int) map[int]NormMainer {
-	tmp := make(map[int]NormMainer, len(m.info))
-	for k, v := range m.info {
-		if v.Level == level {
-			tmp[k] = *v
-		}
+
+// func (m *List) Info(level int) map[int]datamainer.Miner {
+// 	tmp := make(map[int]datamainer.Miner, len(m.info))
+// 	for k, v := range m.info {
+// 		if v.normMiner.Level == level {
+// 			tmp[k] = *v.normMiner
+// 		}
+// 	}
+// 	return tmp
+// }
+
+func (m *List) Info() map[int]datamainer.Miner {
+
+	miners := make([]*NormMainer, 0, len(m.info))
+	for _, v := range m.info {
+		miners = append(miners, v)
 	}
-	return tmp
-}
 
-func (m *List) InfoAll() map[int]NormMainer {
-	tmp := make(map[int]NormMainer, len(m.info))
-	for k, v := range m.info {
-
-		tmp[k] = *v
-
+	tmp := make(map[int]datamainer.Miner, len(m.info))
+	for k, v := range miners {
+		tmp[k] = datamainer.Miner{
+			Id:        v.id,
+			Class:     v.class,
+			Energy:    v.energy,
+			Totalcoal: v.totalcoal,
+			IsRunning: v.isRunning,
+		}
 	}
 	return tmp
 }

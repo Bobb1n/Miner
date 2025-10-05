@@ -1,25 +1,26 @@
 package normalmainer
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 type NormMainer struct {
+	id        int
 	class     string
-	Level     int
 	energy    int
 	totalcoal int
 	isRunning bool
-	id        int
 }
 
-func NewNormMainer() NormMainer {
+func NewNormMainer() *NormMainer {
 	id := rand.Intn(1000)
-	return NormMainer{
-		class:     "NormMainer",
-		Level:     2,
+	return &NormMainer{
+
+		id:        id,
+		class:     "Norm Miner",
 		energy:    45,
 		totalcoal: 0,
 		isRunning: false,
-		id:        id,
 	}
 }
 
