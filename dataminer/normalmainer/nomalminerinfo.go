@@ -1,35 +1,37 @@
 package normalmainer
 
 import (
-	"math/rand"
+	datamainer "nilchan/FinalProject/dataminer"
+	"nilchan/FinalProject/datauser"
+	"time"
 )
 
-type NormMainer struct {
-	id        int
-	class     string
-	energy    int
-	totalcoal int
-	isRunning bool
+type NormMainerStr struct {
+	datamainer.MinerBase
 }
 
-func NewNormMainer() *NormMainer {
-	id := rand.Intn(1000)
-	return &NormMainer{
-
-		id:        id,
-		class:     "Norm Miner",
-		energy:    45,
-		totalcoal: 0,
-		isRunning: false,
+// вопрос
+func NewNormalMainer() *NormMainerStr {
+	return &NormMainerStr{
+		datamainer.NewMiner("Normal Mainer", 45),
 	}
+
 }
 
-func (n *NormMainer) IsRunning() {
-	n.isRunning = true
+func (m *NormMainerStr) Mine() (int, error) {
+	time.Sleep(2 * time.Second)
+	if errEnergy := m.SetEnergy(1); errEnergy != nil {
+		return 0, errEnergy
+	}
+	coal, errCoal := m.SetCoal(3)
+	if errCoal != nil {
+		return 0, errCoal
+	}
+	return coal, nil
 }
-func (n *NormMainer) UnRunning() {
-	n.isRunning = false
-}
-func (n *NormMainer) GetId() int {
-	return n.id
+func (m *NormMainerStr) Payment(salary int) error {
+	if salary < 50 {
+		return datauser.ErrorLackingBalace
+	}
+	return nil
 }

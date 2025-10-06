@@ -1,70 +1,45 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/dataminer/minerall"
 	"nilchan/FinalProject/dataminer/minimainer"
 	"nilchan/FinalProject/dataminer/normalmainer"
+	"nilchan/FinalProject/dataminer/strongminer"
 	"time"
 
-	"sync"
+	"github.com/k0kubun/pp"
 )
 
 func main() {
-	wg := &sync.WaitGroup{}
+
 	fmt.Println("Start program")
-	ctx := context.Background()
 
-	miner := minimainer.NewMiniMainer()
-	minerList := minimainer.NewList()
-	minerList.AddMiner(miner)
+	miniMainer1 := minimainer.NewMiniMainer()
 
-	moduleMiner := datamainer.NewMainer(minerList)
+	MinerLogic := datamainer.NewManagerMainer()
 
-	moduleMiner.Run(ctx, 50, miner.GetId(), wg)
+	MinerLogic.AddMiner(miniMainer1)
 
-	miner2 := minimainer.NewMiniMainer()
-	minerList1 := minimainer.NewList()
-	minerList1.AddMiner(miner2)
+	MinerLogic.Run(50, miniMainer1)
 
-	moduleMiner1 := datamainer.NewMainer(minerList1)
+	NormMiner := normalmainer.NewNormalMainer()
 
-	moduleMiner1.Run(ctx, 50, miner.GetId(), wg)
+	MinerLogic.AddMiner(NormMiner)
 
-	minernormal := normalmainer.NewNormMainer()
-	minerList2 := normalmainer.NewNormalMiner()
+	MinerLogic.Run(50, NormMiner)
 
-	minerList2.AddMiner(minernormal)
-	minerModule2 := datamainer.NewMainer(minerList2)
-	minerModule2.Run(ctx, 50, minernormal.GetId(), wg)
+	StrongMiner := strongminer.NewStrongMainer()
 
-	minernormal2 := normalmainer.NewNormMainer()
-	minerList3 := normalmainer.NewNormalMiner()
+	MinerLogic.AddMiner(StrongMiner)
 
-	minerList3.AddMiner(minernormal2)
-	minerModule3 := datamainer.NewMainer(minerList2)
-	minerModule3.Run(ctx, 50, minernormal2.GetId(), wg)
+	MinerLogic.Run(500, StrongMiner)
 
-	// time.Sleep(1 * time.Second)
-	// minerList.Start(ctx, 50, miner2.GetId(), wg)
-	// time.Sleep(7 * time.Second)
-	// for i := 0; i <= 1000; i++ {
-	// 	minerList.Stop(i)
-	// }
-	wg.Wait()
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second)
+	InfoByGroup := MinerLogic.InfoByGroup("Mini Mainer")
+	infoAll := MinerLogic.InfoAll()
+	pp.Println(InfoByGroup)
+	pp.Println(infoAll)
+	fmt.Println("Время кончилось")
 
-	infonormal := moduleMiner.Info()
-
-	infoAll := &minerall.MinerMap{}
-	infoAll.AddGroup(minerList)
-
-	infoAll.AddGroup(minerList2)
-
-	allinfo := infoAll.InfoAll()
-	fmt.Println(allinfo)
-	fmt.Println(infonormal)
-	fmt.Println("Finished")
 }

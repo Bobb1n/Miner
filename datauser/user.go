@@ -2,7 +2,7 @@ package datauser
 
 type User struct {
 	Name    string
-	Balance int
+	Balance int //TotalCoal
 	Energy  int
 }
 
