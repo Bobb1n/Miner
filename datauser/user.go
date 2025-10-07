@@ -13,3 +13,13 @@ func (u *User) NewUser(name string, balance int, energy int) User {
 		Energy:  energy,
 	}
 }
+
+// func (u *User) BalanceAdd() {
+
+// 	go func() {
+// 		defer wg.Done()
+// 		for v := range coalTransferPoint {
+// 			coal.Add(int64(v))
+// 		}
+// 	}()
+// }

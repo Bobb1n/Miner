@@ -55,67 +55,77 @@ func (m *ManagerMainer) Run(salary int, miner Miner) error {
 	m.done[miner.GetId()] = done
 	m.cancel[miner.GetId()] = minercansel
 	miner.SetStatusWork(true)
-	go m.Start(minerCtx, miner)
+	m.Start(minerCtx, miner)
 
 	return nil
 }
 
 func (m *ManagerMainer) Start(ctx context.Context, miner Miner) {
 	// defer close(done)
+	defer miner.SetStatusWork(false)
 	transferCoal := make(chan int)
 
 	wg := &sync.WaitGroup{}
+
+	type MineResult struct {
+		coal int
+		err  error
+	}
+
 	wg.Add(1)
 	go func() {
-
 		defer wg.Done()
 		defer close(transferCoal)
 
 		for {
+			resultChan := make(chan MineResult, 1)
+
+			go func() {
+				coal, err := miner.Mine()
+				resultChan <- MineResult{coal: coal, err: err}
+			}()
+
 			select {
 			case <-ctx.Done():
 
-				fmt.Println("Finish")
+				fmt.Println("Майнинг остановлен по запросу")
 				return
 
-			default:
-
-				coal, err := miner.Mine()
-				if err != nil {
-					fmt.Println(err)
+			case result := <-resultChan:
+				if result.err != nil {
+					fmt.Println("Ошибка майнинга:", result.err)
 					return
 				}
-				transferCoal <- coal
 
+				select {
+				case <-ctx.Done():
+
+					return
+				case transferCoal <- result.coal:
+					log.Printf("Добыто: %d угля \n", result.coal)
+
+				}
 			}
 		}
-
 	}()
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		total := 0
+
 		for coal := range transferCoal {
-			total += coal
-			log.Printf("Добыто: %d угля, Всего: %d \n", coal, total)
+
+			_ = coal
 		}
 
 	}()
 
 	go func() {
 		wg.Wait()
-		m.mtx.Lock()
-		miner.SetStatusWork(false)
-		m.mtx.Unlock()
-		fmt.Printf("Майнер %d автоматически остановлен\n", miner.GetId())
+
+		log.Printf("Майнер %d автоматически остановлен\n", miner.GetId())
 
 	}()
 
-}
-
-func (m *ManagerMainer) Stop(miner Miner) error {
-	return nil
 }
 
 func (m *ManagerMainer) InfoById(id int) (MinerStats, error) {
@@ -149,4 +159,42 @@ func (m *ManagerMainer) InfoAll() []MinerStats {
 		result = append(result, miner.Stats())
 	}
 	return result
+}
+
+// Стоп конкртенного манйера
+func (m *ManagerMainer) Stop(id int) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	_, ok := m.info[id]
+	if !ok {
+		return fmt.Errorf("майнер с таким id не найден")
+	}
+	canсel, ok := m.cancel[id]
+	if !ok {
+		return fmt.Errorf("невозможно остановить майнер")
+	}
+
+	canсel()
+
+	delete(m.cancel, id)
+
+	return nil
+}
+
+func (m *ManagerMainer) StopAll() {
+	m.mtx.Lock()
+
+	cancels := make([]context.CancelFunc, 0, len(m.cancel))
+	for _, cancel := range m.cancel {
+		cancels = append(cancels, cancel)
+	}
+
+	m.cancel = make(map[int]context.CancelFunc)
+	m.mtx.Unlock()
+
+	for _, cancel := range cancels {
+		cancel()
+	}
+
+	log.Println("Сигнал остановки отправлен всем майнерам")
 }
