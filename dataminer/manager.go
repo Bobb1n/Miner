@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"nilchan/FinalProject/datauser"
 	"sync"
 )
 
@@ -12,13 +13,15 @@ type ManagerMainer struct {
 	mtx    sync.Mutex
 	cancel map[int]context.CancelFunc
 	done   map[int]chan struct{}
+	user   *datauser.User
 }
 
-func NewManagerMainer() *ManagerMainer {
+func NewManagerMainer(user *datauser.User) *ManagerMainer {
 	return &ManagerMainer{
 		info:   make(map[int]Miner),
 		cancel: make(map[int]context.CancelFunc),
 		done:   make(map[int]chan struct{}),
+		user:   user,
 	}
 }
 
@@ -28,17 +31,19 @@ func (m *ManagerMainer) AddMiner(miner Miner) {
 	m.info[miner.GetId()] = miner
 
 }
-func (m *ManagerMainer) Run(salary int, miner Miner) error {
+func (m *ManagerMainer) Run(miner Miner) error {
 
 	ctx := context.Background()
-	// wg := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if errSalary := miner.Payment(salary); errSalary != nil {
+	subtraction, errSalary := miner.Payment(m.user.GetBalance())
+	if errSalary != nil {
 		return errSalary
 	}
+	m.user.SubtractBalance(subtraction)
 
 	miner, ok := m.info[miner.GetId()]
 
@@ -55,15 +60,31 @@ func (m *ManagerMainer) Run(salary int, miner Miner) error {
 	m.done[miner.GetId()] = done
 	m.cancel[miner.GetId()] = minercansel
 	miner.SetStatusWork(true)
-	m.Start(minerCtx, miner)
+
+	transferChan := m.Start(minerCtx, miner)
+	//нужна ли тут овобще wg
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for coal := range transferChan {
+
+			m.user.AddBalance(coal)
+		}
+
+	}()
+	go func() {
+		wg.Wait()
+	}()
 
 	return nil
 }
 
-func (m *ManagerMainer) Start(ctx context.Context, miner Miner) {
+func (m *ManagerMainer) Start(ctx context.Context, miner Miner) <-chan int {
 	// defer close(done)
-	defer miner.SetStatusWork(false)
+
 	transferCoal := make(chan int)
+	total := 0
 
 	wg := &sync.WaitGroup{}
 
@@ -102,29 +123,21 @@ func (m *ManagerMainer) Start(ctx context.Context, miner Miner) {
 
 					return
 				case transferCoal <- result.coal:
-					log.Printf("Добыто: %d угля \n", result.coal)
+					total += result.coal
+					log.Printf("Добыто: %d угля.Всего %d \n", result.coal, total)
 
 				}
 			}
 		}
 	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		for coal := range transferCoal {
-
-			_ = coal
-		}
-
-	}()
 
 	go func() {
 		wg.Wait()
-
+		miner.SetStatusWork(false)
 		log.Printf("Майнер %d автоматически остановлен\n", miner.GetId())
 
 	}()
+	return transferCoal
 
 }
 

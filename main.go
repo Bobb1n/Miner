@@ -4,6 +4,7 @@ import (
 	"fmt"
 	datamainer "nilchan/FinalProject/dataminer"
 	"nilchan/FinalProject/dataminer/minimainer"
+	"nilchan/FinalProject/datauser"
 	"time"
 
 	"github.com/k0kubun/pp"
@@ -13,13 +14,20 @@ func main() {
 
 	fmt.Println("Start program")
 
-	miniMainer1 := minimainer.NewMiniMainer()
+	NewUSer := datauser.NewUser("Vanya")
 
-	MinerLogic := datamainer.NewManagerMainer()
+	miniMainer1 := minimainer.NewMiniMainer()
+	miniMainer2 := minimainer.NewMiniMainer()
+
+	MinerLogic := datamainer.NewManagerMainer(NewUSer)
 
 	MinerLogic.AddMiner(miniMainer1)
+	MinerLogic.AddMiner(miniMainer2)
 
-	MinerLogic.Run(50, miniMainer1)
+	err := MinerLogic.Run(miniMainer1)
+	fmt.Println(err)
+	err = MinerLogic.Run(miniMainer2)
+	fmt.Println(err)
 
 	// NormMiner := normalmainer.NewNormalMainer()
 
@@ -32,8 +40,10 @@ func main() {
 	// MinerLogic.AddMiner(StrongMiner)
 
 	// MinerLogic.Run(500, StrongMiner)
-	time.Sleep(10 * time.Second)
-	MinerLogic.StopAll()
+
+	NewUSer.InfoUser()
+	time.Sleep(33 * time.Second)
+	// MinerLogic.StopAll()
 
 	// time.Sleep(2 * time.Second)
 	InfoByGroup := MinerLogic.InfoByGroup("Mini Mainer")

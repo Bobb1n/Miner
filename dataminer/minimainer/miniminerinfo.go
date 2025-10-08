@@ -20,7 +20,7 @@ func NewMiniMainer() *MiniMainerStr {
 
 func (m *MiniMainerStr) Mine() (int, error) {
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	if errEnergy := m.SetEnergy(1); errEnergy != nil {
 		return 0, errEnergy
 	}
@@ -30,11 +30,12 @@ func (m *MiniMainerStr) Mine() (int, error) {
 	}
 	return coal, nil
 }
-func (m *MiniMainerStr) Payment(salary int) error {
-	if salary <= 5 {
-		return datauser.ErrorLackingBalace
+func (m *MiniMainerStr) Payment(salary int) (int, error) {
+	subtraction := 5
+	if salary < subtraction {
+		return 0, datauser.ErrorLackingBalace
 	}
-	return nil
+	return subtraction, nil
 }
 
 // func (m *MiniMainerStr)Info()MiniMainerStr{

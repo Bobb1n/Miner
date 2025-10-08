@@ -33,9 +33,11 @@ func (m *StrongMainerStr) Mine() (int, error) {
 	m.count += 3
 	return coal, nil
 }
-func (m *StrongMainerStr) Payment(salary int) error {
-	if salary <= 450 {
-		return datauser.ErrorLackingBalace
+
+func (m *StrongMainerStr) Payment(salary int) (int, error) {
+	subtraction := 450
+	if salary < subtraction {
+		return 0, datauser.ErrorLackingBalace
 	}
-	return nil
+	return subtraction, nil
 }

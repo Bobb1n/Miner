@@ -12,7 +12,7 @@ type Miner interface {
 	Mine() (int, error)
 	GetId() int
 	SetStatusWork(status bool)
-	Payment(salary int) error
+	Payment(subtraction int) (int, error)
 	GetStatusWork() bool
 	Stats() MinerStats
 }
@@ -57,11 +57,11 @@ func (m *MinerBase) Stats() MinerStats {
 	}
 }
 
-func (m MinerBase) GetEnergy() int { return m.energy }
+func (m *MinerBase) GetEnergy() int { return m.energy }
 
-func (m MinerBase) GetId() int          { return m.id }
-func (m MinerBase) GetTotalCoal() int   { return m.totalcoal }
-func (m MinerBase) GetStatusWork() bool { return m.statuswork.Load() }
+func (m *MinerBase) GetId() int          { return m.id }
+func (m *MinerBase) GetTotalCoal() int   { return m.totalcoal }
+func (m *MinerBase) GetStatusWork() bool { return m.statuswork.Load() }
 
 func (m *MinerBase) SetCoal(coal int) (int, error) {
 	m.mtx.Lock()

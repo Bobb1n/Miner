@@ -29,9 +29,11 @@ func (m *NormMainerStr) Mine() (int, error) {
 	}
 	return coal, nil
 }
-func (m *NormMainerStr) Payment(salary int) error {
-	if salary < 50 {
-		return datauser.ErrorLackingBalace
+
+func (m *NormMainerStr) Payment(salary int) (int, error) {
+	subtraction := 50
+	if salary < subtraction {
+		return 0, datauser.ErrorLackingBalace
 	}
-	return nil
+	return subtraction, nil
 }
