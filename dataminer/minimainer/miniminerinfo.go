@@ -13,7 +13,7 @@ type MiniMainerStr struct {
 // вопрос
 func NewMiniMainer() *MiniMainerStr {
 	return &MiniMainerStr{
-		datamainer.NewMiner("Mini Mainer", 30),
+		*datamainer.NewMiner("Mini Mainer", 30),
 	}
 
 }

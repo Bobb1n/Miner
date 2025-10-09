@@ -113,9 +113,10 @@ func (m *User) PassivIncome(ctx context.Context) {
 		}
 	}
 }
+
 func (u *User) StopPassivIncome() {
-
 	if u.passivIncome != nil {
-
+		u.passivIncome()
 	}
+
 }

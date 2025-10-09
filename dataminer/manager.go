@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"nilchan/FinalProject/datauser"
+
 	"sync"
 )
 
@@ -194,7 +195,7 @@ func (m *ManagerMainer) Stop(id int) error {
 	return nil
 }
 
-func (m *ManagerMainer) StopAll() {
+func (m *ManagerMainer) StopGame() {
 	m.mtx.Lock()
 
 	cancels := make([]context.CancelFunc, 0, len(m.cancel))
@@ -208,6 +209,7 @@ func (m *ManagerMainer) StopAll() {
 	for _, cancel := range cancels {
 		cancel()
 	}
+	m.user.StopPassivIncome()
 
 	log.Println("Сигнал остановки отправлен всем майнерам")
 }

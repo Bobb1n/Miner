@@ -26,9 +26,9 @@ type MinerBase struct {
 	mtx        sync.Mutex
 }
 
-func NewMiner(class string, energy int) MinerBase {
+func NewMiner(class string, energy int) *MinerBase {
 	id := int(minerIDCounter.Add(1))
-	user := MinerBase{
+	user := &MinerBase{
 		id:    id,
 		class: class,
 	}
@@ -87,8 +87,6 @@ func (m *MinerBase) SetEnergy(energy int) error {
 	}
 }
 
-// реализовать атомик тут
 func (m *MinerBase) SetStatusWork(status bool) {
 	m.statuswork.Store(status)
-
 }

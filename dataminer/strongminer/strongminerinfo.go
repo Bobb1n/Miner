@@ -15,7 +15,7 @@ type StrongMainerStr struct {
 // вопрос
 func NewStrongMainer() *StrongMainerStr {
 	return &StrongMainerStr{
-		MinerBase: datamainer.NewMiner("StrongMainer", 60),
+		MinerBase: *datamainer.NewMiner("StrongMainer", 60),
 	}
 
 }

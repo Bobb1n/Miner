@@ -13,7 +13,7 @@ type NormMainerStr struct {
 // вопрос
 func NewNormalMainer() *NormMainerStr {
 	return &NormMainerStr{
-		datamainer.NewMiner("Normal Mainer", 45),
+		*datamainer.NewMiner("Normal Mainer", 45),
 	}
 
 }
