@@ -41,7 +41,6 @@ func main() {
 
 	// MinerLogic.Run(500, StrongMiner)
 
-	NewUSer.InfoUser()
 	time.Sleep(33 * time.Second)
 	// MinerLogic.StopAll()
 

@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 )
 
-var minerIDCounter int
+var minerIDCounter atomic.Int64
 
 type Miner interface {
 	Mine() (int, error)
@@ -20,20 +20,21 @@ type Miner interface {
 type MinerBase struct {
 	id         int
 	class      string
-	energy     int
-	totalcoal  int
+	energy     atomic.Int64
+	totalcoal  atomic.Int64
 	statuswork atomic.Bool
 	mtx        sync.Mutex
 }
 
 func NewMiner(class string, energy int) MinerBase {
-	minerIDCounter++
-	return MinerBase{
-		id:        minerIDCounter,
-		class:     class,
-		energy:    energy,
-		totalcoal: 0,
+	id := int(minerIDCounter.Add(1))
+	user := MinerBase{
+		id:    id,
+		class: class,
 	}
+	user.energy.Store(int64(energy))
+	user.totalcoal.Store(0)
+	return user
 }
 
 // структура под  api
@@ -51,38 +52,39 @@ func (m *MinerBase) Stats() MinerStats {
 	return MinerStats{
 		Id:         m.id,
 		Class:      m.class,
-		Energy:     m.energy,
-		TotalCoal:  m.totalcoal,
+		Energy:     int(m.energy.Load()),
+		TotalCoal:  int(m.totalcoal.Load()),
 		StatusWork: m.statuswork.Load(),
 	}
 }
 
-func (m *MinerBase) GetEnergy() int { return m.energy }
+func (m *MinerBase) GetEnergy() int { return int(m.energy.Load()) }
 
 func (m *MinerBase) GetId() int          { return m.id }
-func (m *MinerBase) GetTotalCoal() int   { return m.totalcoal }
+func (m *MinerBase) GetTotalCoal() int   { return int(m.totalcoal.Load()) }
 func (m *MinerBase) GetStatusWork() bool { return m.statuswork.Load() }
 
 func (m *MinerBase) SetCoal(coal int) (int, error) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
 	if coal < 0 {
 		return 0, errors.New("значение не может быть орицательным")
 	}
-	m.totalcoal += coal
+	m.totalcoal.Add(int64(coal))
 	return coal, nil
 }
 func (m *MinerBase) SetEnergy(energy int) error {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	if m.energy <= 0 {
-		return errors.New("добыча невозмажна так как кончилась энергия")
-	}
 	if energy < 0 {
 		return errors.New("значение не может быть орицательным")
 	}
-	m.energy -= energy
-	return nil
+	for {
+		current := m.energy.Load()
+		if current < int64(energy) {
+			return errors.New("добыча невозмажна так как кончилась энергия")
+		}
+		if m.energy.CompareAndSwap(current, current-int64(energy)) {
+			return nil
+		}
+
+	}
 }
 
 // реализовать атомик тут

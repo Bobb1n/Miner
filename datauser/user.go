@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"nilchan/FinalProject/upgrade"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -11,13 +12,15 @@ import (
 type User struct {
 	name         string
 	balance      atomic.Int64 //TotalCoal
-	upgrade      upgrade.Upgrade
+	upgrade      []upgrade.Upgrade
 	passivIncome context.CancelFunc
+	mtx          sync.Mutex
 }
 
 func NewUser(name string) *User {
 	user := &User{
-		name: name,
+		name:    name,
+		upgrade: []upgrade.Upgrade{},
 	}
 	user.balance.Store(100)
 	ctx, cansel := context.WithCancel(context.Background())
@@ -32,37 +35,87 @@ func (u *User) AddBalance(amount int) {
 	u.balance.Add(int64(amount))
 }
 func (u *User) SubtractBalance(amount int) error {
-	result := u.balance.Load()
-	if result < int64(amount) {
-		return ErrorLackingBalace
+	for {
+		result := u.balance.Load()
+		if result < int64(amount) {
+			return ErrorLackingBalace
+		}
+
+		if u.balance.CompareAndSwap(result, result-int64(amount)) {
+			return nil
+		}
 	}
-	u.balance.Add(-int64(amount))
+
+}
+
+type UserInfo struct {
+	Name     string         `json:"name"`
+	Balance  int            `json:"balance"`
+	Upgrades map[string]int `json:"upgrades"`
+}
+
+func (u *User) UserInfo() UserInfo {
+	return UserInfo{
+		Name:     u.name,
+		Balance:  u.GetBalance(),
+		Upgrades: u.GetUpgradeStats(),
+	}
+}
+
+func (u *User) Upgrade(updrade upgrade.Upgrade) error {
+	if updrade == nil {
+		return fmt.Errorf("апгрейд не может быть nil")
+	}
+	price := updrade.BuyUpgrade()
+	err := u.SubtractBalance(price)
+	if err != nil {
+		return err
+	}
+
+	u.mtx.Lock()
+	u.upgrade = append(u.upgrade, updrade)
+	u.mtx.Unlock()
+
 	return nil
 }
-func (u *User) InfoUser() {
 
-	fmt.Printf(`
-User Information:
-  Name:    %s
-  Balance: %d
-`, u.name, u.balance.Load())
-}
+//	func (u *User) GetInfoUpgrades() []upgrade.Upgrade {
+//		u.mtx.Lock()
+//		defer u.mtx.Unlock()
+//		result := make([]upgrade.Upgrade, len(u.upgrade))
+//		copy(result, u.upgrade)
+//		return result
+//	}
 
-func (u *User) Upgrade(updrade upgrade.Upgrade) {
-	u.upgrade.BuyUpgrade()
+func (u *User) GetUpgradeStats() map[string]int {
+	u.mtx.Lock()
+	defer u.mtx.Unlock()
+
+	stats := make(map[string]int)
+	for _, upg := range u.upgrade {
+		stats[upg.GetName()]++
+	}
+
+	return stats
 }
 
 func (m *User) PassivIncome(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Закончили")
+			fmt.Println("Пассивный доход остановлен")
+			return
 
 		case <-ticker.C:
 			m.AddBalance(1)
-
 		}
+	}
+}
+func (u *User) StopPassivIncome() {
+
+	if u.passivIncome != nil {
 
 	}
 }
