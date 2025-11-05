@@ -1,4 +1,4 @@
-package datauser
+package errors
 
 import "errors"
 

@@ -2,16 +2,16 @@ package http
 
 import (
 	"net/http"
-	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/datauser"
+	"nilchan/FinalProject/internal/models"
+	datamainer "nilchan/FinalProject/internal/service"
 )
 
 type HttpHandlers struct {
 	MinerManager *datamainer.ManagerMainer
-	User         *datauser.User
+	User         *models.User
 }
 
-func NewHttpHandlers(minerManager *datamainer.ManagerMainer, user *datauser.User) *HttpHandlers {
+func NewHttpHandlers(minerManager *datamainer.ManagerMainer, user *models.User) *HttpHandlers {
 	return &HttpHandlers{
 		MinerManager: minerManager,
 		User:         user,
@@ -125,23 +125,23 @@ func (h *HttpHandlers) HandleGetInfoMinerId(w http.ResponseWriter, r *http.Reque
 
 }
 
-/*
-pattern: /api/upgrades
-method:  GET
-info:-
+// /*
+// pattern: /api/upgrades
+// method:  GET
+// info:-
 
-succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+// succeed:
+//   - status code:   200 OK
+//   - response body: JSON represent get info
 
-failed:
-  - status code:   400, 500, ...
-  - response body: JSON with error + time
-*/
+// failed:
+//   - status code:   400, 500, ...
+//   - response body: JSON with error + time
+// */
 
-func (h *HttpHandlers) HandleGetInfoUpdrades(w http.ResponseWriter, r *http.Request) {
+// func (h *HttpHandlers) HandleGetInfoUpdrades(w http.ResponseWriter, r *http.Request) {
 
-}
+// }
 
 /*
 pattern: /api/upgrades

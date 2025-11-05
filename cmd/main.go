@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/dataminer/minimainer"
-	"nilchan/FinalProject/datauser"
+	"nilchan/FinalProject/internal/models"
+	datamainer "nilchan/FinalProject/internal/service"
+	"nilchan/FinalProject/internal/service/dataminer/minimainer"
+
 	"time"
 
 	"github.com/k0kubun/pp"
@@ -14,12 +15,19 @@ func main() {
 
 	fmt.Println("Start program")
 
-	NewUSer := datauser.NewUser("Vanya")
+	user := models.NewUser("lala")
+	pp.Println(user)
+	user2 := models.UserInfo{
+		Name:     "lalal",
+		Balance:  100000,
+		Upgrades: make(map[string]int),
+	}
+	pp.Println(user2)
 
 	miniMainer1 := minimainer.NewMiniMainer()
 	miniMainer2 := minimainer.NewMiniMainer()
 
-	MinerLogic := datamainer.NewManagerMainer(NewUSer)
+	MinerLogic := datamainer.NewManagerMainer(user)
 
 	MinerLogic.AddMiner(miniMainer1)
 	MinerLogic.AddMiner(miniMainer2)

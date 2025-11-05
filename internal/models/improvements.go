@@ -1,4 +1,4 @@
-package upgrade
+package models
 
 type Upgrade interface {
 	BuyUpgrade() int

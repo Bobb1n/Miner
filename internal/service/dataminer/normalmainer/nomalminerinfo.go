@@ -1,19 +1,19 @@
 package normalmainer
 
 import (
-	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/datauser"
+	"nilchan/FinalProject/internal/models"
+	"nilchan/FinalProject/pkg/errors"
 	"time"
 )
 
 type NormMainerStr struct {
-	datamainer.MinerBase
+	models.MinerBase
 }
 
 // вопрос
 func NewNormalMainer() *NormMainerStr {
 	return &NormMainerStr{
-		*datamainer.NewMiner("Normal Mainer", 45),
+		*models.NewMiner("Normal Mainer", 45),
 	}
 
 }
@@ -33,7 +33,7 @@ func (m *NormMainerStr) Mine() (int, error) {
 func (m *NormMainerStr) Payment(salary int) (int, error) {
 	subtraction := 50
 	if salary < subtraction {
-		return 0, datauser.ErrorLackingBalace
+		return 0, errors.ErrorLackingBalace
 	}
 	return subtraction, nil
 }

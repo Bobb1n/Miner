@@ -24,9 +24,7 @@ func (h *HttpServer) StartServer() error {
 	router.Path("/api/user/stop").Methods("POST").HandlerFunc(h.httphandlers.HandleStopGame)
 	router.Path("/api/miners/types").Methods("GET").HandlerFunc(h.httphandlers.HandleInfoSalryMiner)
 	router.Path("/api/miners").Methods("POST").HandlerFunc(h.httphandlers.HandleAddNewMiner)
-	router.Path("/api/miners").Methods("GET").Queries("status", "true", "class", "Mini-Mainer", "Normal-Mainer", "Strong-Mainer").HandlerFunc(h.httphandlers.HandleGetInfoMiner)
-	router.Path("/api/miners/{id}").Methods("GET").HandlerFunc(h.httphandlers.HandleGetInfoMinerId)
-	router.Path("/api/upgrades").Methods("GET").HandlerFunc(h.httphandlers.HandleGetInfoUpdrades)
+	router.Path("/api/miners").Methods("GET").HandlerFunc(h.httphandlers.HandleGetInfoMiner)
 	router.Path("/api/upgrades").Methods("GET").Queries("statusBuy", "true").HandlerFunc(h.httphandlers.HandleGetInfoQueryUpdrades)
 	router.Path("/api/upgrades").Methods("POST").HandlerFunc(h.httphandlers.HandleAddUpgrades)
 

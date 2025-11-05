@@ -4,35 +4,36 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"nilchan/FinalProject/datauser"
+
+	"nilchan/FinalProject/internal/models"
 
 	"sync"
 )
 
 type ManagerMainer struct {
-	info   map[int]Miner
+	info   map[int]models.Miner
 	mtx    sync.Mutex
 	cancel map[int]context.CancelFunc
 	done   map[int]chan struct{}
-	user   *datauser.User
+	user   *models.User
 }
 
-func NewManagerMainer(user *datauser.User) *ManagerMainer {
+func NewManagerMainer(user *models.User) *ManagerMainer {
 	return &ManagerMainer{
-		info:   make(map[int]Miner),
+		info:   make(map[int]models.Miner),
 		cancel: make(map[int]context.CancelFunc),
 		done:   make(map[int]chan struct{}),
 		user:   user,
 	}
 }
 
-func (m *ManagerMainer) AddMiner(miner Miner) {
+func (m *ManagerMainer) AddMiner(miner models.Miner) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	m.info[miner.GetId()] = miner
 
 }
-func (m *ManagerMainer) Run(miner Miner) error {
+func (m *ManagerMainer) Run(miner models.Miner) error {
 
 	ctx := context.Background()
 	wg := &sync.WaitGroup{}
@@ -81,7 +82,7 @@ func (m *ManagerMainer) Run(miner Miner) error {
 	return nil
 }
 
-func (m *ManagerMainer) Start(ctx context.Context, miner Miner) <-chan int {
+func (m *ManagerMainer) Start(ctx context.Context, miner models.Miner) <-chan int {
 	// defer close(done)
 
 	transferCoal := make(chan int)
@@ -142,21 +143,21 @@ func (m *ManagerMainer) Start(ctx context.Context, miner Miner) <-chan int {
 
 }
 
-func (m *ManagerMainer) InfoById(id int) (MinerStats, error) {
+func (m *ManagerMainer) InfoById(id int) (models.MinerStats, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
 	miner, ok := m.info[id]
 	if !ok {
-		return MinerStats{}, fmt.Errorf("майнер с id %d не найден", id)
+		return models.MinerStats{}, fmt.Errorf("майнер с id %d не найден", id)
 	}
 	return miner.Stats(), nil
 }
 
-func (m *ManagerMainer) InfoByGroup(class string) []MinerStats {
+func (m *ManagerMainer) InfoByGroup(class string) []models.MinerStats {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
-	result := []MinerStats{}
+	result := []models.MinerStats{}
 	for _, miner := range m.info {
 		stats := miner.Stats()
 		if stats.Class == class {
@@ -165,10 +166,10 @@ func (m *ManagerMainer) InfoByGroup(class string) []MinerStats {
 	}
 	return result
 }
-func (m *ManagerMainer) InfoAll() []MinerStats {
+func (m *ManagerMainer) InfoAll() []models.MinerStats {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
-	result := []MinerStats{}
+	result := []models.MinerStats{}
 	for _, miner := range m.info {
 		result = append(result, miner.Stats())
 	}

@@ -1,21 +1,21 @@
 package strongminer
 
 import (
-	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/datauser"
+	"nilchan/FinalProject/internal/models"
+	"nilchan/FinalProject/pkg/errors"
 	"sync/atomic"
 	"time"
 )
 
 type StrongMainerStr struct {
-	datamainer.MinerBase
+	models.MinerBase
 	count atomic.Int32
 }
 
 // вопрос
 func NewStrongMainer() *StrongMainerStr {
 	return &StrongMainerStr{
-		MinerBase: *datamainer.NewMiner("StrongMainer", 60),
+		MinerBase: *models.NewMiner("StrongMainer", 60),
 	}
 
 }
@@ -38,7 +38,7 @@ func (m *StrongMainerStr) Mine() (int, error) {
 func (m *StrongMainerStr) Payment(salary int) (int, error) {
 	subtraction := 450
 	if salary < subtraction {
-		return 0, datauser.ErrorLackingBalace
+		return 0, errors.ErrorLackingBalace
 	}
 	return subtraction, nil
 }

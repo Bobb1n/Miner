@@ -1,9 +1,9 @@
-package datauser
+package models
 
 import (
 	"context"
 	"fmt"
-	"nilchan/FinalProject/upgrade"
+	"nilchan/FinalProject/pkg/errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,7 +12,7 @@ import (
 type User struct {
 	name         string
 	balance      atomic.Int64 //TotalCoal
-	upgrade      []upgrade.Upgrade
+	upgrade      []Upgrade
 	passivIncome context.CancelFunc
 	mtx          sync.Mutex
 }
@@ -20,7 +20,7 @@ type User struct {
 func NewUser(name string) *User {
 	user := &User{
 		name:    name,
-		upgrade: []upgrade.Upgrade{},
+		upgrade: []Upgrade{},
 	}
 	user.balance.Store(100)
 	ctx, cansel := context.WithCancel(context.Background())
@@ -38,7 +38,7 @@ func (u *User) SubtractBalance(amount int) error {
 	for {
 		result := u.balance.Load()
 		if result < int64(amount) {
-			return ErrorLackingBalace
+			return errors.ErrorLackingBalace
 		}
 
 		if u.balance.CompareAndSwap(result, result-int64(amount)) {
@@ -62,7 +62,7 @@ func (u *User) UserInfo() UserInfo {
 	}
 }
 
-func (u *User) Upgrade(updrade upgrade.Upgrade) error {
+func (u *User) Upgrade(updrade Upgrade) error {
 	if updrade == nil {
 		return fmt.Errorf("апгрейд не может быть nil")
 	}

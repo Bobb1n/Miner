@@ -1,19 +1,19 @@
 package minimainer
 
 import (
-	datamainer "nilchan/FinalProject/dataminer"
-	"nilchan/FinalProject/datauser"
+	"nilchan/FinalProject/internal/models"
+	"nilchan/FinalProject/pkg/errors"
 	"time"
 )
 
 type MiniMainerStr struct {
-	datamainer.MinerBase
+	models.MinerBase
 }
 
 // вопрос
 func NewMiniMainer() *MiniMainerStr {
 	return &MiniMainerStr{
-		*datamainer.NewMiner("Mini Mainer", 30),
+		*models.NewMiner("Mini Mainer", 30),
 	}
 
 }
@@ -33,7 +33,7 @@ func (m *MiniMainerStr) Mine() (int, error) {
 func (m *MiniMainerStr) Payment(salary int) (int, error) {
 	subtraction := 5
 	if salary < subtraction {
-		return 0, datauser.ErrorLackingBalace
+		return 0, errors.ErrorLackingBalace
 	}
 	return subtraction, nil
 }

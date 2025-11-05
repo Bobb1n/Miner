@@ -1,4 +1,4 @@
-package datamainer
+package models
 
 import (
 	"errors"
