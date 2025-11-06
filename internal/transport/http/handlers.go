@@ -1,9 +1,14 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"nilchan/FinalProject/internal/models"
 	datamainer "nilchan/FinalProject/internal/service"
+	"nilchan/FinalProject/internal/service/dataminer/minimainer"
+	"nilchan/FinalProject/internal/service/dataminer/normalmainer"
+	"nilchan/FinalProject/internal/service/dataminer/strongminer"
+	"time"
 )
 
 type HttpHandlers struct {
@@ -15,6 +20,24 @@ func NewHttpHandlers(minerManager *datamainer.ManagerMainer, user *models.User) 
 	return &HttpHandlers{
 		MinerManager: minerManager,
 		User:         user,
+	}
+}
+
+func sendJsonError(w http.ResponseWriter, code int, messange string) {
+	errorDTO := ErrorDTO{
+		Message: messange,
+		Time:    time.Now(),
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(errorDTO)
+}
+
+func sendJsonSuccses(w http.ResponseWriter, code int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), code)
 	}
 }
 
@@ -32,24 +55,27 @@ failed:
   - response body: JSON with error + time
 */
 func (h *HttpHandlers) HandleGetInfoUser(w http.ResponseWriter, r *http.Request) {
+	user := h.User.UserInfo()
+	sendJsonSuccses(w, http.StatusOK, user)
 
 }
 
 /*
 pattern: /api/user/stop
 method:  POST
-info:    JSON in HTTP request body
-
+info:    _
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent change status game
+	- status code:   200 OK
+	- response body: JSON represent change status game
 
 failed:
-  - status code:   400, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleStopGame(w http.ResponseWriter, r *http.Request) {
+	message := h.MinerManager.StopGame()
+	sendJsonSuccses(w, http.StatusOK, message)
 
 }
 
@@ -59,15 +85,21 @@ method:  GET
 info:    -
 
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+	- status code:   200 OK
+	- response body: JSON represent get info
 
 failed:
-  - status code:   400, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleInfoSalryMiner(w http.ResponseWriter, r *http.Request) {
+	types := []models.MinerTypeInfo{
+		minimainer.GetTypeInfo(),
+		normalmainer.GetTypeInfo(),
+		strongminer.GetTypeInfo(),
+	}
+	sendJsonSuccses(w, http.StatusOK, types)
 
 }
 
@@ -77,12 +109,12 @@ method:  POST
 info:    JSON in HTTP request body
 
 succeed:
-  - status code:   201 OK
-  - response body: JSON represent create new miner
+	- status code:   201 OK
+	- response body: JSON represent create new miner
 
 failed:
-  - status code:   400, 409, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 409, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleAddNewMiner(w http.ResponseWriter, r *http.Request) {
@@ -95,12 +127,12 @@ method:  GET
 info:query param
 
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+	- status code:   200 OK
+	- response body: JSON represent get info
 
 failed:
-  - status code:   400, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleGetInfoMiner(w http.ResponseWriter, r *http.Request) {
@@ -113,12 +145,12 @@ method:  GET
 info:pattern
 
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+	- status code:   200 OK
+	- response body: JSON represent get info
 
 failed:
-  - status code:   400, 404, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 404, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleGetInfoMinerId(w http.ResponseWriter, r *http.Request) {
@@ -149,12 +181,12 @@ method:  Post
 info:json
 
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+	- status code:   200 OK
+	- response body: JSON represent get info
 
 failed:
-  - status code:   400, 409, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 409, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleAddUpgrades(w http.ResponseWriter, r *http.Request) {
@@ -167,12 +199,12 @@ method:  GET
 info:query param
 
 succeed:
-  - status code:   200 OK
-  - response body: JSON represent get info
+	- status code:   200 OK
+	- response body: JSON represent get info
 
 failed:
-  - status code:   400, 500, ...
-  - response body: JSON with error + time
+	- status code:   400, 500, ...
+	- response body: JSON with error + time
 */
 
 func (h *HttpHandlers) HandleGetInfoQueryUpdrades(w http.ResponseWriter, r *http.Request) {

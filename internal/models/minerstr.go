@@ -23,16 +23,18 @@ type MinerBase struct {
 	energy     atomic.Int64
 	totalcoal  atomic.Int64
 	statuswork atomic.Bool
+	salary     atomic.Int64
 	mtx        sync.Mutex
 }
 
-func NewMiner(class string, energy int) *MinerBase {
+func NewMiner(class string, energy int, salary int) *MinerBase {
 	id := int(minerIDCounter.Add(1))
 	user := &MinerBase{
 		id:    id,
 		class: class,
 	}
 	user.energy.Store(int64(energy))
+	user.salary.Store(int64(salary))
 	user.totalcoal.Store(0)
 	return user
 }
@@ -58,7 +60,9 @@ func (m *MinerBase) Stats() MinerStats {
 	}
 }
 
-func (m *MinerBase) GetEnergy() int { return int(m.energy.Load()) }
+func (m *MinerBase) GetEnergy() int   { return int(m.energy.Load()) }
+func (m *MinerBase) GetSalary() int   { return int(m.salary.Load()) }
+func (m *MinerBase) GetClass() string { return m.class }
 
 func (m *MinerBase) GetId() int          { return m.id }
 func (m *MinerBase) GetTotalCoal() int   { return int(m.totalcoal.Load()) }
@@ -89,4 +93,11 @@ func (m *MinerBase) SetEnergy(energy int) error {
 
 func (m *MinerBase) SetStatusWork(status bool) {
 	m.statuswork.Store(status)
+}
+
+type MinerTypeInfo struct {
+	Class       string `json:"class"`
+	Cost        int    `json:"cost"`
+	Energy      int    `json:"energy"`
+	Description string `json:"вescription"`
 }

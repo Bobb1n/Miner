@@ -196,7 +196,7 @@ func (m *ManagerMainer) Stop(id int) error {
 	return nil
 }
 
-func (m *ManagerMainer) StopGame() {
+func (m *ManagerMainer) StopGame() string {
 	m.mtx.Lock()
 
 	cancels := make([]context.CancelFunc, 0, len(m.cancel))
@@ -213,4 +213,5 @@ func (m *ManagerMainer) StopGame() {
 	m.user.StopPassivIncome()
 
 	log.Println("Сигнал остановки отправлен всем майнерам")
+	return "Вы остановили игру"
 }

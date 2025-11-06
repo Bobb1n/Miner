@@ -6,20 +6,34 @@ import (
 	"time"
 )
 
+// Константы типа майнера (один источник правды)
+const (
+	TypeClass       = "Mini Mainer"
+	TypeEnergy      = 30
+	TypeSalary      = 5
+	TypeDescription = "Базовый майнер, добывает 1 угля в секунду"
+)
+
 type MiniMainerStr struct {
 	models.MinerBase
 }
 
-// вопрос
 func NewMiniMainer() *MiniMainerStr {
 	return &MiniMainerStr{
-		*models.NewMiner("Mini Mainer", 30),
+		*models.NewMiner(TypeClass, TypeEnergy, TypeSalary),
 	}
+}
 
+func GetTypeInfo() models.MinerTypeInfo {
+	return models.MinerTypeInfo{
+		Class:       TypeClass,
+		Cost:        TypeSalary,
+		Energy:      TypeEnergy,
+		Description: TypeDescription,
+	}
 }
 
 func (m *MiniMainerStr) Mine() (int, error) {
-
 	time.Sleep(1 * time.Second)
 	if errEnergy := m.SetEnergy(1); errEnergy != nil {
 		return 0, errEnergy
@@ -30,15 +44,10 @@ func (m *MiniMainerStr) Mine() (int, error) {
 	}
 	return coal, nil
 }
-func (m *MiniMainerStr) Payment(salary int) (int, error) {
-	subtraction := 5
-	if salary < subtraction {
+
+func (m *MiniMainerStr) Payment(salaryGet int) (int, error) {
+	if salaryGet < TypeSalary {
 		return 0, errors.ErrorLackingBalace
 	}
-	return subtraction, nil
+	return TypeSalary, nil
 }
-
-// func (m *MiniMainerStr)Info()MiniMainerStr{
-// 	tmp := make(map[int]MiniMainerStr)
-// 	for k,v := range
-// }

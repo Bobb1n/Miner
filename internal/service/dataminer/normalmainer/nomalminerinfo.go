@@ -6,6 +6,22 @@ import (
 	"time"
 )
 
+const (
+	ClassName       = "Normal Mainer"
+	TypeCost        = 50
+	TypeEnergy      = 45
+	TypeDescription = "Средний майнер, добывает 3 угля за 2 секунды"
+)
+
+func GetTypeInfo() models.MinerTypeInfo {
+	return models.MinerTypeInfo{
+		Class:       ClassName,
+		Cost:        TypeCost,
+		Energy:      TypeEnergy,
+		Description: TypeDescription,
+	}
+}
+
 type NormMainerStr struct {
 	models.MinerBase
 }
@@ -13,7 +29,7 @@ type NormMainerStr struct {
 // вопрос
 func NewNormalMainer() *NormMainerStr {
 	return &NormMainerStr{
-		*models.NewMiner("Normal Mainer", 45),
+		*models.NewMiner(ClassName, TypeEnergy, TypeCost),
 	}
 
 }
@@ -30,10 +46,9 @@ func (m *NormMainerStr) Mine() (int, error) {
 	return coal, nil
 }
 
-func (m *NormMainerStr) Payment(salary int) (int, error) {
-	subtraction := 50
-	if salary < subtraction {
+func (m *NormMainerStr) Payment(salaryGet int) (int, error) {
+	if salaryGet < TypeCost {
 		return 0, errors.ErrorLackingBalace
 	}
-	return subtraction, nil
+	return TypeCost, nil
 }
