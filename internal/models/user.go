@@ -15,12 +15,16 @@ type User struct {
 	upgrade      []Upgrade
 	passivIncome context.CancelFunc
 	mtx          sync.Mutex
+	time         time.Time
+	minerdata    map[string]int
 }
 
 func NewUser(name string) *User {
 	user := &User{
-		name:    name,
-		upgrade: []Upgrade{},
+		name:      name,
+		upgrade:   []Upgrade{},
+		time:      time.Now(),
+		minerdata: make(map[string]int),
 	}
 	user.balance.Store(100)
 	ctx, cansel := context.WithCancel(context.Background())
@@ -49,16 +53,20 @@ func (u *User) SubtractBalance(amount int) error {
 }
 
 type UserInfo struct {
-	Name     string         `json:"name"`
-	Balance  int            `json:"balance"`
-	Upgrades map[string]int `json:"upgrades"`
+	Name      string           `json:"name"`
+	Balance   int              `json:"balance"`
+	Upgrades  map[string]int   `json:"upgrades"`
+	Time      float64          `json:"game_time_seconds"`
+	MinerData []map[string]int `json:"all miner in game"`
 }
 
 func (u *User) UserInfo() UserInfo {
 	return UserInfo{
-		Name:     u.name,
-		Balance:  u.GetBalance(),
-		Upgrades: u.GetUpgradeStats(),
+		Name:      u.name,
+		Balance:   u.GetBalance(),
+		Upgrades:  u.GetUpgradeStats(),
+		Time:      time.Since(u.time).Seconds(),
+		MinerData: u.minerTotalsSlice(),
 	}
 }
 
@@ -119,4 +127,19 @@ func (u *User) StopPassivIncome() {
 		u.passivIncome()
 	}
 
+}
+func (u *User) AddMinerStats(class string, count int) {
+	u.mtx.Lock()
+	defer u.mtx.Unlock()
+	u.minerdata[class] += count
+}
+
+func (u *User) minerTotalsSlice() []map[string]int {
+	u.mtx.Lock()
+	defer u.mtx.Unlock()
+	result := make([]map[string]int, 0, len(u.minerdata))
+	for class, count := range u.minerdata {
+		result = append(result, map[string]int{class: count})
+	}
+	return result
 }

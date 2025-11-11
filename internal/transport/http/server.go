@@ -25,7 +25,7 @@ func (h *HttpServer) StartServer() error {
 	router.Path("/api/miners/types").Methods("GET").HandlerFunc(h.httphandlers.HandleInfoSalryMiner)
 	router.Path("/api/miners").Methods("POST").HandlerFunc(h.httphandlers.HandleAddNewMiner)
 	router.Path("/api/miners").Methods("GET").HandlerFunc(h.httphandlers.HandleGetInfoMiner)
-	router.Path("/api/upgrades").Methods("GET").Queries("statusBuy", "true").HandlerFunc(h.httphandlers.HandleGetInfoQueryUpdrades)
+	router.Path("/api/upgrades").Methods("GET").HandlerFunc(h.httphandlers.HandleGetInfoQueryUpdrades)
 	router.Path("/api/upgrades").Methods("POST").HandlerFunc(h.httphandlers.HandleAddUpgrades)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {

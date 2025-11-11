@@ -32,7 +32,7 @@ type Ventilation struct {
 
 func NewVentilation() *Ventilation {
 	return &Ventilation{
-		name:  "Вентиляция в шахту",
+		name:  "Вентиляция",
 		price: 15000,
 		count: 0,
 	}

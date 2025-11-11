@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// Константы типа майнера (один источник правды)
 const (
 	TypeClass       = "Mini Mainer"
 	TypeEnergy      = 30

@@ -8,7 +8,10 @@ import (
 	"nilchan/FinalProject/internal/service/dataminer/minimainer"
 	"nilchan/FinalProject/internal/service/dataminer/normalmainer"
 	"nilchan/FinalProject/internal/service/dataminer/strongminer"
+	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type HttpHandlers struct {
@@ -37,7 +40,7 @@ func sendJsonSuccses(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, err.Error(), code)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -74,8 +77,8 @@ failed:
 */
 
 func (h *HttpHandlers) HandleStopGame(w http.ResponseWriter, r *http.Request) {
-	message := h.MinerManager.StopGame()
-	sendJsonSuccses(w, http.StatusOK, message)
+	userInfo, _ := h.MinerManager.StopGame()
+	sendJsonSuccses(w, http.StatusOK, userInfo)
 
 }
 
@@ -118,7 +121,24 @@ failed:
 */
 
 func (h *HttpHandlers) HandleAddNewMiner(w http.ResponseWriter, r *http.Request) {
-
+	var minerDTO MinerDTO
+	if err := json.NewDecoder(r.Body).Decode(&minerDTO); err != nil {
+		sendJsonError(w, 400, err.Error())
+		return
+	}
+	defer r.Body.Close()
+	miner, err := minerDTO.ValidateToMinerDTO()
+	if err != nil {
+		sendJsonError(w, 400, err.Error())
+		return
+	}
+	h.MinerManager.AddMiner(miner)
+	if err := h.MinerManager.Run(miner); err != nil {
+		sendJsonError(w, 500, err.Error())
+		return
+	}
+	miner.Stats()
+	sendJsonSuccses(w, 201, miner.Stats())
 }
 
 /*
@@ -136,6 +156,46 @@ failed:
 */
 
 func (h *HttpHandlers) HandleGetInfoMiner(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
+	statusStr := q.Get("status")
+	class := q.Get("class")
+
+	var (
+		hasStatus bool
+		status    bool
+	)
+
+	if statusStr != "" {
+		parsed, err := strconv.ParseBool(statusStr)
+		if err != nil {
+			sendJsonError(w, 400, err.Error())
+			return
+		}
+		hasStatus = true
+		status = parsed
+	}
+
+	result := h.MinerManager.InfoAll()
+	if hasStatus {
+		result = h.MinerManager.InfoByStatus(status)
+	}
+
+	if class != "" {
+		if hasStatus {
+			filter := make([]models.MinerStats, 0, len(result))
+			for _, miner := range result {
+				if miner.Class == class {
+					filter = append(filter, miner)
+				}
+			}
+
+			result = filter
+		} else {
+			result = h.MinerManager.InfoByGroup(class)
+		}
+	}
+	sendJsonSuccses(w, http.StatusOK, result)
 
 }
 
@@ -154,7 +214,18 @@ failed:
 */
 
 func (h *HttpHandlers) HandleGetInfoMinerId(w http.ResponseWriter, r *http.Request) {
-
+	id := mux.Vars(r)["id"]
+	result, err := strconv.Atoi(id)
+	if err != nil {
+		sendJsonError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	miner, err := h.MinerManager.InfoById(result)
+	if err != nil {
+		sendJsonError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	sendJsonSuccses(w, http.StatusOK, miner)
 }
 
 // /*
@@ -190,6 +261,21 @@ failed:
 */
 
 func (h *HttpHandlers) HandleAddUpgrades(w http.ResponseWriter, r *http.Request) {
+	var upgradeDTO UpgradeDTO
+	if err := json.NewDecoder(r.Body).Decode(&upgradeDTO); err != nil {
+		sendJsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	upgrade, err := upgradeDTO.ValidateToUpgradeDTO()
+	if err != nil {
+		sendJsonError(w, http.StatusBadRequest, err.Error())
+	}
+	err = h.User.Upgrade(upgrade)
+	if err != nil {
+		sendJsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	sendJsonSuccses(w, http.StatusAccepted, h.User.GetUpgradeStats())
 
 }
 
@@ -208,5 +294,31 @@ failed:
 */
 
 func (h *HttpHandlers) HandleGetInfoQueryUpdrades(w http.ResponseWriter, r *http.Request) {
+	statusParam := r.URL.Query().Get("statusBuy")
 
+	var filterBought *bool
+	if statusParam != "" {
+		value, err := strconv.ParseBool(statusParam)
+		if err != nil {
+			sendJsonError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		filterBought = &value
+	}
+	stats := h.User.GetUpgradeStats()
+	result := make([]UpgradeDTO, 0, len(stats))
+
+	for name, count := range stats {
+		dto := UpgradeDTO{
+			Name:      name,
+			Count:     count,
+			WasBought: count > 0,
+		}
+		if filterBought != nil && dto.WasBought != *filterBought {
+			continue
+		}
+		result = append(result, dto)
+	}
+
+	sendJsonSuccses(w, http.StatusOK, result)
 }

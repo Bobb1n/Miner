@@ -15,6 +15,7 @@ type Miner interface {
 	Payment(subtraction int) (int, error)
 	GetStatusWork() bool
 	Stats() MinerStats
+	GetClass() string
 }
 
 type MinerBase struct {

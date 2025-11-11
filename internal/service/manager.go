@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"nilchan/FinalProject/internal/models"
 
 	"sync"
@@ -46,6 +45,8 @@ func (m *ManagerMainer) Run(miner models.Miner) error {
 		return errSalary
 	}
 	m.user.SubtractBalance(subtraction)
+
+	m.user.AddMinerStats(miner.GetClass(), 1)
 
 	miner, ok := m.info[miner.GetId()]
 
@@ -154,6 +155,19 @@ func (m *ManagerMainer) InfoById(id int) (models.MinerStats, error) {
 	return miner.Stats(), nil
 }
 
+func (m *ManagerMainer) InfoByStatus(status bool) []models.MinerStats {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	result := []models.MinerStats{}
+	for _, miner := range m.info {
+		stats := miner.Stats()
+		if stats.StatusWork == status {
+			result = append(result, stats)
+		}
+	}
+	return result
+}
+
 func (m *ManagerMainer) InfoByGroup(class string) []models.MinerStats {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -176,7 +190,7 @@ func (m *ManagerMainer) InfoAll() []models.MinerStats {
 	return result
 }
 
-// Стоп конкртенного манйера
+// Стоп конкртенного майнера
 func (m *ManagerMainer) Stop(id int) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -196,7 +210,7 @@ func (m *ManagerMainer) Stop(id int) error {
 	return nil
 }
 
-func (m *ManagerMainer) StopGame() string {
+func (m *ManagerMainer) StopGame() (models.UserInfo, string) {
 	m.mtx.Lock()
 
 	cancels := make([]context.CancelFunc, 0, len(m.cancel))
@@ -213,5 +227,5 @@ func (m *ManagerMainer) StopGame() string {
 	m.user.StopPassivIncome()
 
 	log.Println("Сигнал остановки отправлен всем майнерам")
-	return "Вы остановили игру"
+	return m.user.UserInfo(), "Вы остановили игру"
 }
